@@ -418,3 +418,35 @@ def debug_binary_protobuf(data, depth=1):
                 debug_binary_protobuf(data, depth+1)
             except:
                 print "-" * ((depth+1) * 3), "failed to decode inside"
+
+
+def encode_raw_dict(cls, raw_dict_data):
+    buf = StringIO()
+
+    # FIXME: cls constructs every time.
+    for field_multiplicity, field_type, field_name, field_number in cls().__lookup__:
+        data = raw_dict_data.get(field_name)
+        if  data is None:
+            if field_multiplicity == "required":
+                raise Exception("field (%s) is required but has not been set" % field_name)
+            continue
+
+        def encode_value(value):
+            if issubclass(field_type, PrimativeType):
+                data = field_type.encode(value)
+                wire_type = field_type.wire_type
+            elif issubclass(field_type, Message):
+                data = encode_raw_dict(field_type, value)
+                wire_type = 2
+            else:
+                raise Exception("field type must be a subclass of PrimativeType or Message")
+            return (data, wire_type)
+
+        if field_multiplicity == "repeated":
+            for item in data:
+                data, wire_type = encode_value(item)
+                Message.write_tag(buf, field_number, wire_type, data)
+        else:
+            data, wire_type = encode_value(data)
+            Message.write_tag(buf, field_number, wire_type, data)
+    return buf.getvalue()

@@ -1,0 +1,7 @@
+message TestProto {
+    optional uint64 a = 1;
+    repeated uint32 b = 2;
+    optional uint32 c = 3;
+    required bool d = 4;
+    optional bytes e = 5;
+}
