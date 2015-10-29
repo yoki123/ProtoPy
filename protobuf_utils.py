@@ -407,6 +407,30 @@ class Message:
 
         return buf.getvalue()
 
+    def to_dict(self):
+        data = {}
+        for field_multiplicity, field_type, field_name, field_number in self.__lookup__:
+            value = getattr(self, field_name)
+            if value == None:
+                continue
+            if field_multiplicity == "repeated":
+                if len(value) < 1:
+                    continue
+                if isinstance(value[0], Message):
+                    data[field_name] = [v.to_dict() for v in value]
+                else:
+                    data[field_name] = value
+            else:
+                if isinstance(value, Message):
+                    data[field_name] = value.to_dict()
+                else:
+                    data[field_name] = value
+        return data
+
+    def __str__(self):
+        return repr(self.to_dict())
+
+
 def debug_binary_protobuf(data, depth=1):
     s = StringIO(data)
     length = len(data)
