@@ -29,12 +29,14 @@ from exampleproto import *
 '\x10\xc4\xe6\x88\x89\x01\x18\xb9\n*\x14TOKENTOKENTOKENTOKENR\x11\t\xd2\x04\x00\x00\x00\x00\x00\x00\x12\x04blah(\x00'
 
 # decoding
->>> msg = message_CMsgClientGamesPlayed()
+>>> msg = CMsgClientGamesPlayed()
 >>> msg.decode(encoded)
 >>> msg.games
-[<exampleproto.Game instance at 0xXXXXXXXX>]
+[{'game_id': 1234L, 'game_name': 'blah', 'game_version': 0L}]
 >>> msg.games[0].game_name
-"blah"
+'blah'
 >>> msg.token
-"TOKENTOKENTOKENTOKEN"
+'TOKENTOKENTOKENTOKEN'
+>>> msg.to_dict()
+{'game_port': 1337, 'token': 'TOKENTOKENTOKENTOKEN', 'game_ip_address': 287454020, 'games': [{'game_id': 1234, 'game_name': 'blah', 'game_version': 0}]}
 ```

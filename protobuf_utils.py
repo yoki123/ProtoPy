@@ -382,6 +382,7 @@ class Message:
         for field_multiplicity, field_type, field_name, field_number in self.__lookup__:
             data = getattr(self, field_name)
             if data == None:
+                # FIX: remove string comparisions
                 if field_multiplicity == "required":
                     raise Exception("field (%s) is required but has not been set" % field_name)
                 continue
@@ -406,6 +407,49 @@ class Message:
                 Message.write_tag(buf, field_number, wire_type, data)
 
         return buf.getvalue()
+
+    @classmethod
+    def from_dict(cls, dictionary):
+        self = cls()
+        for field_multiplicity, field_type, field_name, field_number in self.__lookup__:
+            if field_name not in dictionary:
+                continue
+            
+            def decode_value(value):
+                if issubclass(field_type, Message):
+                    value = field_type.from_dict(value)
+                return value
+
+            data = dictionary[field_name]
+            if field_multiplicity == "repeated":
+                setattr(self, field_name, [decode_value(item) for item in data])
+            else:
+                setattr(self, field_name, decode_value(data))
+
+        return self
+
+    def to_dict(self):
+        # dict-ify
+        res = {}
+        for field_multiplicity, field_type, field_name, field_number in self.__lookup__:
+            data = getattr(self, field_name)
+            if data is None:
+                continue
+
+            def encode_value(value):
+                if issubclass(field_type, Message):
+                    value = value.to_dict()
+                return value
+            
+            if field_multiplicity == "repeated":
+                res[field_name] = [encode_value(item) for item in data]
+            else:
+                res[field_name] = encode_value(data)
+
+        return res
+
+    def __repr__(self):
+        return str(self.to_dict())
 
 def debug_binary_protobuf(data, depth=1):
     s = StringIO(data)
